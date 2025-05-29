@@ -1,48 +1,4 @@
 #include "util.h"
-#include <filesystem>
-#include <fstream>
-#include <nlohmann/json.hpp>
-
-namespace fs = std::filesystem;
-using json = nlohmann::json;
-
-// 从 JSON 中加载车道线
-std::vector<Line> loadLinesFromJson(const json &j, const std::string &timestamp) {
-    std::vector<Line> lines;
-    if (j.contains(timestamp)) {
-        for (const auto &item: j[timestamp]) {
-            Line line;
-            line.a = item["A"];
-            line.b = item["B"];
-            line.c = item["C"];
-            lines.push_back(line);
-        }
-    }
-    return lines;
-}
-
-// 从 JSON 中加载相机参数
-bool loadCameraFromJson(const std::string &path, CameraParams &cam) {
-    std::ifstream ifs(path);
-    if (!ifs.is_open()) {
-        std::cerr << "Failed to open camera.json\n";
-        return false;
-    }
-    json j;
-    ifs >> j;
-
-    for (int i = 0; i < 3; ++i)
-        for (int k = 0; k < 3; ++k)
-            cam.K(i, k) = j["K"][i][k];
-
-    cam.yaw = j["yaw"];
-    cam.pitch = j["pitch"];
-    cam.roll = j["roll"];
-    cam.R_initial = eulerToMatrix(cam.yaw, cam.pitch, cam.roll);
-    cam.t_initial = Eigen::Vector3d(j["t"][0], j["t"][1], j["t"][2]);
-
-    return true;
-}
 
 int main() {
     std::string image_folder = "/home/tom/CLionProjects/vpCalibrate/data/images";

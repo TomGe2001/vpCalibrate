@@ -6,6 +6,12 @@
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
+#include <filesystem>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 // 线结构
 struct Line {
@@ -27,7 +33,6 @@ struct VanishingPointResult {
     double yaw, pitch, roll;
 };
 
-// 声明
 Eigen::Vector2d computeIntersection(const Line &line1, const Line &line2);
 
 Eigen::Vector2d computeVanishingPoint(const std::vector<Line> &lines);
@@ -39,5 +44,11 @@ VanishingPointResult updateExtrinsics(const CameraParams &camera, const Eigen::V
 void drawLineSafe(cv::Mat &img, const Line &line, const cv::Scalar &color, int thickness = 2);
 
 void drawVanishingPoint(cv::Mat &img, const Eigen::Vector2d &vp, const cv::Scalar &color, int radius = 6);
+
+// 从 JSON 中加载车道线
+std::vector<Line> loadLinesFromJson(const json &j, const std::string &timestamp);
+
+// 从 JSON 中加载相机参数
+bool loadCameraFromJson(const std::string &path, CameraParams &cam);
 
 #endif // VPRECTIFY_UTIL_H

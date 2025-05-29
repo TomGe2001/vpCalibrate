@@ -44,7 +44,7 @@ VanishingPointResult updateExtrinsics(const CameraParams &camera, const Eigen::V
 
     Eigen::Matrix3d R_new = eulerToMatrix(new_yaw, new_pitch, camera.roll);
 
-    return { vp, R_new, new_yaw, new_pitch, camera.roll };
+    return {vp, R_new, new_yaw, new_pitch, camera.roll};
 }
 
 // 安全绘制直线
@@ -79,4 +79,43 @@ void drawVanishingPoint(cv::Mat &img, const Eigen::Vector2d &vp, const cv::Scala
     if (x >= 0 && x < img.cols && y >= 0 && y < img.rows) {
         cv::circle(img, cv::Point(x, y), radius, color, -1);
     }
+}
+
+
+// 从 JSON 中加载车道线
+std::vector<Line> loadLinesFromJson(const json &j, const std::string &timestamp) {
+    std::vector<Line> lines;
+    if (j.contains(timestamp)) {
+        for (const auto &item: j[timestamp]) {
+            Line line;
+            line.a = item["A"];
+            line.b = item["B"];
+            line.c = item["C"];
+            lines.push_back(line);
+        }
+    }
+    return lines;
+}
+
+// 从 JSON 中加载相机参数
+bool loadCameraFromJson(const std::string &path, CameraParams &cam) {
+    std::ifstream ifs(path);
+    if (!ifs.is_open()) {
+        std::cerr << "Failed to open camera.json\n";
+        return false;
+    }
+    json j;
+    ifs >> j;
+
+    for (int i = 0; i < 3; ++i)
+        for (int k = 0; k < 3; ++k)
+            cam.K(i, k) = j["K"][i][k];
+
+    cam.yaw = j["yaw"];
+    cam.pitch = j["pitch"];
+    cam.roll = j["roll"];
+    cam.R_initial = eulerToMatrix(cam.yaw, cam.pitch, cam.roll);
+    cam.t_initial = Eigen::Vector3d(j["t"][0], j["t"][1], j["t"][2]);
+
+    return true;
 }
